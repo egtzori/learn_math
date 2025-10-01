@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="bg">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Учим таблицата за умножение</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Comic Sans MS', cursive, sans-serif;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: #ffffff;
+        }
+
+        .container {
+            background: rgba(30, 40, 70, 0.9);
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+            max-width: 500px;
+            width: 90%;
+            text-align: center;
+        }
+
+        h1 {
+            font-size: 2.5em;
+            margin-bottom: 30px;
+            color: #ffd700;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+        }
+
+        .section_selector {
+            margin-bottom: 30px;
+        }
+
+        .section_label {
+            font-size: 1.3em;
+            margin-bottom: 15px;
+            color: #87ceeb;
+        }
+
+        .section_buttons {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        .section_button {
+            padding: 15px 30px;
+            font-size: 1.2em;
+            border: none;
+            border-radius: 10px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: bold;
+        }
+
+        .section_button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .section_button.active {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            transform: scale(1.05);
+        }
+
+        .play_control {
+            margin-top: 30px;
+        }
+
+        .play_button {
+            padding: 20px 50px;
+            font-size: 1.5em;
+            border: none;
+            border-radius: 15px;
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: bold;
+            min-width: 200px;
+        }
+
+        .play_button.playing {
+            background: linear-gradient(135deg, #eb3349 0%, #f45c43 100%);
+        }
+
+        .play_button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .status {
+            margin-top: 20px;
+            font-size: 1.2em;
+            color: #ffd700;
+            min-height: 30px;
+        }
+
+        .equation_display {
+            margin-top: 30px;
+            font-size: 3em;
+            color: #ffffff;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 20px;
+            min-height: 100px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        .playing_animation {
+            animation: pulse 1s infinite;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🌟 Учим таблицата 🌟</h1>
+
+        <div class="section_selector">
+            <div class="section_label">Избери число:</div>
+            <div class="section_buttons">
+                <button class="section_button active" data-section="all">Всички</button>
+                <button class="section_button" data-section="7">7</button>
+            </div>
+        </div>
+
+        <div class="play_control">
+            <button class="play_button" id="play_button">▶️ Пусни</button>
+        </div>
+
+        <div class="status" id="status"></div>
+
+        <div class="equation_display" id="equation_display">
+            Готови за учене? 📚
+        </div>
+    </div>
+
+    <script>
+        let is_playing = false;
+        let current_section = 'all';
+        let play_interval = null;
+        let current_audio = null;
+
+        const available_sounds = {
+            7: [
+                {x: 7, y: 1, file: 'sound/7x1.m4a'},
+                {x: 7, y: 2, file: 'sound/7x2.m4a'},
+                {x: 7, y: 3, file: 'sound/7x3.m4a'},
+                {x: 7, y: 4, file: 'sound/7x4.m4a'},
+                {x: 7, y: 5, file: 'sound/7x5.m4a'},
+                {x: 7, y: 6, file: 'sound/7x6.m4a'},
+                {x: 7, y: 7, file: 'sound/7x7.m4a'},
+                {x: 7, y: 8, file: 'sound/7x8.m4a'},
+                {x: 7, y: 9, file: 'sound/7x9.m4a'},
+                {x: 7, y: 10, file: 'sound/7x10.m4a'}
+            ]
+        };
+
+        const section_buttons = document.querySelectorAll('.section_button');
+        const play_button = document.getElementById('play_button');
+        const status_element = document.getElementById('status');
+        const equation_display = document.getElementById('equation_display');
+
+        section_buttons.forEach(button => {
+            button.addEventListener('click', () => {
+                section_buttons.forEach(b => b.classList.remove('active'));
+                button.classList.add('active');
+                current_section = button.dataset.section;
+
+                if (is_playing) {
+                    stop_playing();
+                    start_playing();
+                }
+            });
+        });
+
+        play_button.addEventListener('click', () => {
+            if (is_playing) {
+                stop_playing();
+            } else {
+                start_playing();
+            }
+        });
+
+        function get_random_sound() {
+            let sounds_pool = [];
+
+            if (current_section === 'all' || current_section === '7') {
+                sounds_pool = [...available_sounds[7]];
+            }
+
+            if (sounds_pool.length === 0) {
+                return null;
+            }
+
+            return sounds_pool[Math.floor(Math.random() * sounds_pool.length)];
+        }
+
+        function play_random_sound() {
+            const sound = get_random_sound();
+
+            if (!sound) {
+                status_element.textContent = 'Няма налични звуци';
+                return;
+            }
+
+            equation_display.innerHTML = `${sound.x} × ${sound.y} = ?`;
+            equation_display.classList.add('playing_animation');
+
+            if (current_audio) {
+                current_audio.pause();
+                current_audio = null;
+            }
+
+            current_audio = new Audio(sound.file);
+
+            current_audio.play().then(() => {
+                setTimeout(() => {
+                    equation_display.innerHTML = `${sound.x} × ${sound.y} = ${sound.x * sound.y}`;
+                }, 2000);
+            }).catch(error => {
+                console.error('Грешка при възпроизвеждане:', error);
+                status_element.textContent = 'Грешка при възпроизвеждане';
+            });
+
+            current_audio.addEventListener('ended', () => {
+                equation_display.classList.remove('playing_animation');
+            });
+        }
+
+        function start_playing() {
+            is_playing = true;
+            play_button.textContent = '⏹️ Спри';
+            play_button.classList.add('playing');
+            status_element.textContent = 'Възпроизвеждане...';
+
+            play_random_sound();
+
+            play_interval = setInterval(() => {
+                play_random_sound();
+            }, 6000);
+        }
+
+        function stop_playing() {
+            is_playing = false;
+            play_button.textContent = '▶️ Пусни';
+            play_button.classList.remove('playing');
+            status_element.textContent = '';
+            equation_display.innerHTML = 'Готови за учене? 📚';
+            equation_display.classList.remove('playing_animation');
+
+            if (play_interval) {
+                clearInterval(play_interval);
+                play_interval = null;
+            }
+
+            if (current_audio) {
+                current_audio.pause();
+                current_audio = null;
+            }
+        }
+    </script>
+</body>
+</html>
