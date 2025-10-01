@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Учим таблицата за умножение</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='75' font-size='75'>🧮</text></svg>">
     <style>
         * {
             margin: 0;
@@ -26,7 +27,7 @@
             border-radius: 20px;
             padding: 40px;
             box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
-            max-width: 500px;
+            max-width: 550px;
             width: 90%;
             text-align: center;
         }
@@ -163,6 +164,10 @@
         let current_section = 'all';
         let play_interval = null;
         let current_audio = null;
+        let audio_cache = {};
+        let audio_initialized = false;
+        let recent_sounds = [];
+        const max_recent = 5;
 
         const available_sounds = {
             7: [
@@ -178,6 +183,45 @@
                 {x: 7, y: 10, file: 'sound/7x10.m4a'}
             ]
         };
+
+        // Preload all audio files
+        function preload_audio() {
+            available_sounds[7].forEach(sound => {
+                if (!audio_cache[sound.file]) {
+                    audio_cache[sound.file] = new Audio(sound.file);
+                    audio_cache[sound.file].load();
+                    console.log("preload " + sound.file);
+                }
+            });
+        }
+
+        // Initialize audio context on first user interaction
+        async function initialize_audio() {
+            if (!audio_initialized) {
+                status_element.textContent = 'Подготвяме звуците...';
+
+                // For mobile: play and pause each audio to unlock
+                const promises = [];
+                for (const audio of Object.values(audio_cache)) {
+                    audio.muted = true;  // Mute during initialization
+                    promises.push(
+                        audio.play().then(() => {
+                            audio.pause();
+                            audio.currentTime = 0;
+                            audio.muted = false;  // Unmute after initialization
+                            audio.volume = 1;
+                        }).catch(e => console.log('Init error:', e))
+                    );
+                }
+
+                await Promise.all(promises);
+                audio_initialized = true;
+                console.log('Audio initialized');
+            }
+        }
+
+        // Preload on page load
+        window.addEventListener('load', preload_audio);
 
         const section_buttons = document.querySelectorAll('.section_button');
         const play_button = document.getElementById('play_button');
@@ -197,7 +241,13 @@
             });
         });
 
-        play_button.addEventListener('click', () => {
+        play_button.addEventListener('click', async () => {
+            if (!audio_initialized) {
+                await initialize_audio();
+                // Small delay to ensure everything is ready
+                await new Promise(resolve => setTimeout(resolve, 100));
+            }
+
             if (is_playing) {
                 stop_playing();
             } else {
@@ -212,11 +262,33 @@
                 sounds_pool = [...available_sounds[7]];
             }
 
+            // Filter out recent sounds
+            sounds_pool = sounds_pool.filter(sound =>
+                !recent_sounds.some(recent => recent.file === sound.file)
+            );
+
+            // If we've filtered out too many, allow some back
+            if (sounds_pool.length === 0) {
+                // Reset and try again with fewer restrictions
+                recent_sounds = recent_sounds.slice(-2);
+                sounds_pool = available_sounds[7].filter(sound =>
+                    !recent_sounds.some(recent => recent.file === sound.file)
+                );
+            }
+
             if (sounds_pool.length === 0) {
                 return null;
             }
 
-            return sounds_pool[Math.floor(Math.random() * sounds_pool.length)];
+            const selected = sounds_pool[Math.floor(Math.random() * sounds_pool.length)];
+
+            // Add to recent sounds and keep only last 5
+            recent_sounds.push(selected);
+            if (recent_sounds.length > max_recent) {
+                recent_sounds.shift();
+            }
+
+            return selected;
         }
 
         function play_random_sound() {
@@ -232,30 +304,37 @@
 
             if (current_audio) {
                 current_audio.pause();
-                current_audio = null;
+                current_audio.currentTime = 0;
             }
 
-            current_audio = new Audio(sound.file);
+            // Use cached audio
+            current_audio = audio_cache[sound.file];
+            if (!current_audio) {
+                current_audio = new Audio(sound.file);
+                audio_cache[sound.file] = current_audio;
+            }
 
+            current_audio.currentTime = 0;
             current_audio.play().then(() => {
                 setTimeout(() => {
                     equation_display.innerHTML = `${sound.x} × ${sound.y} = ${sound.x * sound.y}`;
                 }, 2000);
             }).catch(error => {
                 console.error('Грешка при възпроизвеждане:', error);
-                status_element.textContent = 'Грешка при възпроизвеждане';
+                status_element.textContent = `Натисни "Пусни" още веднъж за да започнем!`;
             });
 
-            current_audio.addEventListener('ended', () => {
+            // Remove old listener if exists
+            current_audio.onended = () => {
                 equation_display.classList.remove('playing_animation');
-            });
+            };
         }
 
         function start_playing() {
             is_playing = true;
             play_button.textContent = '⏹️ Спри';
             play_button.classList.add('playing');
-            status_element.textContent = 'Възпроизвеждане...';
+            status_element.textContent = '🎵 Слушаме и учим! 🎵';
 
             play_random_sound();
 
