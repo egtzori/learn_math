@@ -154,6 +154,7 @@
             <div class="section_buttons">
                 <button class="section_button active" data-section="all">Всички</button>
                 <button class="section_button" data-section="7">7</button>
+                <button class="section_button" data-section="8">8</button>
             </div>
         </div>
 
@@ -190,12 +191,31 @@
                 {x: 7, y: 8, file: 'sound/7x8.m4a'},
                 {x: 7, y: 9, file: 'sound/7x9.m4a'},
                 {x: 7, y: 10, file: 'sound/7x10.m4a'}
+            ],
+            8: [
+                {x: 8, y: 1, file: 'sound/8x1.m4a'},
+                {x: 8, y: 2, file: 'sound/8x2.m4a'},
+                {x: 8, y: 3, file: 'sound/8x3.m4a'},
+                {x: 8, y: 4, file: 'sound/8x4.m4a'},
+                {x: 8, y: 5, file: 'sound/8x5.m4a'},
+                {x: 8, y: 6, file: 'sound/8x6.m4a'},
+                {x: 8, y: 7, file: 'sound/8x7.m4a'},
+                {x: 8, y: 8, file: 'sound/8x8.m4a'},
+                {x: 8, y: 9, file: 'sound/8x9.m4a'},
+                {x: 8, y: 10, file: 'sound/8x10.m4a'}
             ]
         };
 
         // Preload all audio files
         function preload_audio() {
             available_sounds[7].forEach(sound => {
+                if (!audio_cache[sound.file]) {
+                    audio_cache[sound.file] = new Audio(sound.file);
+                    audio_cache[sound.file].load();
+                    console.log("preload " + sound.file);
+                }
+            });
+            available_sounds[8].forEach(sound => {
                 if (!audio_cache[sound.file]) {
                     audio_cache[sound.file] = new Audio(sound.file);
                     audio_cache[sound.file].load();
@@ -267,8 +287,12 @@
         function get_random_sound() {
             let sounds_pool = [];
 
-            if (current_section === 'all' || current_section === '7') {
+            if (current_section === 'all') {
+                sounds_pool = [...available_sounds[7], ...available_sounds[8]];
+            } else if (current_section === '7') {
                 sounds_pool = [...available_sounds[7]];
+            } else if (current_section === '8') {
+                sounds_pool = [...available_sounds[8]];
             }
 
             // Filter out recent sounds
@@ -280,9 +304,19 @@
             if (sounds_pool.length === 0) {
                 // Reset and try again with fewer restrictions
                 recent_sounds = recent_sounds.slice(-2);
-                sounds_pool = available_sounds[7].filter(sound =>
-                    !recent_sounds.some(recent => recent.file === sound.file)
-                );
+                if (current_section === 'all') {
+                    sounds_pool = [...available_sounds[7], ...available_sounds[8]].filter(sound =>
+                        !recent_sounds.some(recent => recent.file === sound.file)
+                    );
+                } else if (current_section === '7') {
+                    sounds_pool = available_sounds[7].filter(sound =>
+                        !recent_sounds.some(recent => recent.file === sound.file)
+                    );
+                } else if (current_section === '8') {
+                    sounds_pool = available_sounds[8].filter(sound =>
+                        !recent_sounds.some(recent => recent.file === sound.file)
+                    );
+                }
             }
 
             if (sounds_pool.length === 0) {
