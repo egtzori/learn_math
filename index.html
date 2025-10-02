@@ -212,14 +212,12 @@
                 if (!audio_cache[sound.file]) {
                     audio_cache[sound.file] = new Audio(sound.file);
                     audio_cache[sound.file].load();
-                    console.log("preload " + sound.file);
                 }
             });
             available_sounds[8].forEach(sound => {
                 if (!audio_cache[sound.file]) {
                     audio_cache[sound.file] = new Audio(sound.file);
                     audio_cache[sound.file].load();
-                    console.log("preload " + sound.file);
                 }
             });
         }
