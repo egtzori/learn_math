@@ -155,6 +155,7 @@
                 <button class="section_button active" data-section="all">Всички</button>
                 <button class="section_button" data-section="7">7</button>
                 <button class="section_button" data-section="8">8</button>
+                <button class="section_button" data-section="9">9</button>
             </div>
         </div>
 
@@ -203,6 +204,18 @@
                 {x: 8, y: 8, file: 'sound/8x8.m4a'},
                 {x: 8, y: 9, file: 'sound/8x9.m4a'},
                 {x: 8, y: 10, file: 'sound/8x10.m4a'}
+            ],
+            9: [
+                {x: 9, y: 1, file: 'sound/9x1.m4a'},
+                {x: 9, y: 2, file: 'sound/9x2.m4a'},
+                {x: 9, y: 3, file: 'sound/9x3.m4a'},
+                {x: 9, y: 4, file: 'sound/9x4.m4a'},
+                {x: 9, y: 5, file: 'sound/9x5.m4a'},
+                {x: 9, y: 6, file: 'sound/9x6.m4a'},
+                {x: 9, y: 7, file: 'sound/9x7.m4a'},
+                {x: 9, y: 8, file: 'sound/9x8.m4a'},
+                {x: 9, y: 9, file: 'sound/9x9.m4a'},
+                {x: 9, y: 10, file: 'sound/9x10.m4a'}
             ]
         };
 
@@ -215,6 +228,12 @@
                 }
             });
             available_sounds[8].forEach(sound => {
+                if (!audio_cache[sound.file]) {
+                    audio_cache[sound.file] = new Audio(sound.file);
+                    audio_cache[sound.file].load();
+                }
+            });
+            available_sounds[9].forEach(sound => {
                 if (!audio_cache[sound.file]) {
                     audio_cache[sound.file] = new Audio(sound.file);
                     audio_cache[sound.file].load();
@@ -286,11 +305,13 @@
             let sounds_pool = [];
 
             if (current_section === 'all') {
-                sounds_pool = [...available_sounds[7], ...available_sounds[8]];
+                sounds_pool = [...available_sounds[7], ...available_sounds[8], ...available_sounds[9]];
             } else if (current_section === '7') {
                 sounds_pool = [...available_sounds[7]];
             } else if (current_section === '8') {
                 sounds_pool = [...available_sounds[8]];
+            } else if (current_section === '9') {
+                sounds_pool = [...available_sounds[9]];
             }
 
             // Filter out recent sounds
@@ -303,7 +324,7 @@
                 // Reset and try again with fewer restrictions
                 recent_sounds = recent_sounds.slice(-2);
                 if (current_section === 'all') {
-                    sounds_pool = [...available_sounds[7], ...available_sounds[8]].filter(sound =>
+                    sounds_pool = [...available_sounds[7], ...available_sounds[8], ...available_sounds[9]].filter(sound =>
                         !recent_sounds.some(recent => recent.file === sound.file)
                     );
                 } else if (current_section === '7') {
@@ -312,6 +333,10 @@
                     );
                 } else if (current_section === '8') {
                     sounds_pool = available_sounds[8].filter(sound =>
+                        !recent_sounds.some(recent => recent.file === sound.file)
+                    );
+                } else if (current_section === '9') {
+                    sounds_pool = available_sounds[9].filter(sound =>
                         !recent_sounds.some(recent => recent.file === sound.file)
                     );
                 }
